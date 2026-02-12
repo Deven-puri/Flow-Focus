@@ -1,8 +1,3 @@
-/**
- * Reader Page
- * Main reading interface with eye tracking
- */
-
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
@@ -28,13 +23,11 @@ export default function ReaderPage() {
     processGazePoint,
     getDwellProgress,
     resetDwell,
-  } = useGazeLogic(3000); // 3 second threshold
+  } = useGazeLogic(3000);
 
-  // Handle gaze updates from eye tracker
   const handleGazeUpdate = useCallback(
     (x: number, y: number) => {
       processGazePoint(x, y, (event) => {
-        // Dwell threshold reached - show tooltip
         setTooltipData({
           word: event.target.word,
           x,
@@ -42,13 +35,11 @@ export default function ReaderPage() {
         });
       });
 
-      // Update progress indicator
       setDwellProgress(getDwellProgress());
     },
     [processGazePoint, getDwellProgress]
   );
 
-  // Parse text into gaze-targetable words
   const parseTextIntoWords = (text: string) => {
     const words = text.split(' ');
     return words.map((word, index) => (
@@ -61,7 +52,6 @@ export default function ReaderPage() {
     ));
   };
 
-  // Sample reading content
   const sampleContent = {
     title: 'The Economic Impact of Climate Change',
     paragraphs: [
@@ -72,7 +62,6 @@ export default function ReaderPage() {
     ],
   };
 
-  // Permission request screen
   if (!permissionGranted) {
     return (
       <div className="fixed inset-0 bg-gradient-to-br from-blue-50 to-purple-50 z-50 flex items-center justify-center">
@@ -99,11 +88,9 @@ export default function ReaderPage() {
     );
   }
 
-  // Calibration screen (with WebGazer running in background)
   if (!isCalibrated) {
     return (
       <>
-        {/* Start WebGazer DURING calibration */}
         <EyeTracker onGazeUpdate={() => {}} showPredictionDot={false} />
         <Calibration onComplete={() => setIsCalibrated(true)} />
       </>
@@ -112,12 +99,9 @@ export default function ReaderPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      {/* Eye Tracker with prediction dot visible after calibration */}
       <EyeTracker onGazeUpdate={handleGazeUpdate} showPredictionDot={true} />
 
-      {/* Reading Content */}
       <div className="max-w-4xl mx-auto px-8 py-12">
-        {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-4">
             <BookOpen className="w-8 h-8 text-blue-600" />
@@ -130,7 +114,6 @@ export default function ReaderPage() {
           </p>
         </div>
 
-        {/* Content */}
         <div className="bg-white rounded-2xl shadow-lg p-10 space-y-6">
           {sampleContent.paragraphs.map((paragraph, index) => (
             <p
@@ -142,7 +125,6 @@ export default function ReaderPage() {
           ))}
         </div>
 
-        {/* Dwell Progress Indicator */}
         {currentTarget && !isDwelling && dwellProgress > 0 && (
           <div
             className="fixed pointer-events-none z-40"
@@ -180,7 +162,6 @@ export default function ReaderPage() {
           </div>
         )}
 
-        {/* Word Tooltip */}
         {tooltipData && (
           <WordTooltip
             word={tooltipData.word}

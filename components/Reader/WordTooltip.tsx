@@ -1,8 +1,3 @@
-/**
- * WordTooltip Component
- * Floating AI definition tooltip
- */
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -49,7 +44,6 @@ export default function WordTooltip({ word, x, y, onClose }: WordTooltipProps) {
     fetchDefinition();
   }, [word]);
 
-  // Position tooltip above the gaze point
   const tooltipX = Math.max(20, Math.min(x - 150, window.innerWidth - 320));
   const tooltipY = Math.max(80, y - 120);
 
@@ -61,7 +55,6 @@ export default function WordTooltip({ word, x, y, onClose }: WordTooltipProps) {
         top: `${tooltipY}px`,
       }}
     >
-      {/* Header */}
       <div className="bg-gradient-to-r from-blue-500 to-purple-500 px-4 py-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <BookOpen className="w-5 h-5 text-white" />
@@ -75,7 +68,6 @@ export default function WordTooltip({ word, x, y, onClose }: WordTooltipProps) {
         </button>
       </div>
 
-      {/* Content */}
       <div className="p-4">
         {isLoading ? (
           <div className="flex items-center gap-3 text-gray-500">
@@ -89,7 +81,6 @@ export default function WordTooltip({ word, x, y, onClose }: WordTooltipProps) {
         )}
       </div>
 
-      {/* Pointer arrow */}
       <div
         className="absolute w-4 h-4 bg-white border-l border-b border-gray-200 transform rotate-45"
         style={{

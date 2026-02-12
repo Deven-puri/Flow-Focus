@@ -1,15 +1,9 @@
-/**
- * Smoothing algorithms for eye-tracking data
- * Raw WebGazer data is jittery due to saccades (tiny eye jumps)
- */
-
 export class WeightedMovingAverage {
   private previousX: number | null = null;
   private previousY: number | null = null;
   private weight: number;
 
   constructor(weight = 0.8) {
-    // Weight determines smoothing: 0.8 = 80% previous + 20% new
     this.weight = weight;
   }
 
@@ -20,7 +14,6 @@ export class WeightedMovingAverage {
       return { x, y };
     }
 
-    // Apply weighted moving average
     const smoothedX = this.weight * this.previousX + (1 - this.weight) * x;
     const smoothedY = this.weight * this.previousY + (1 - this.weight) * y;
 
@@ -37,11 +30,11 @@ export class WeightedMovingAverage {
 }
 
 export class KalmanFilter {
-  private Q: number; // Process noise covariance
-  private R: number; // Measurement noise covariance
-  private P: number; // Estimation error covariance
-  private K: number; // Kalman gain
-  private x: number | null; // Current estimate
+  private Q: number;
+  private R: number;
+  private P: number;
+  private K: number;
+  private x: number | null;
 
   constructor(Q = 0.001, R = 0.1) {
     this.Q = Q;
@@ -57,10 +50,8 @@ export class KalmanFilter {
       return measurement;
     }
 
-    // Prediction update
     const priorP = this.P + this.Q;
 
-    // Measurement update
     this.K = priorP / (priorP + this.R);
     this.x = this.x + this.K * (measurement - this.x);
     this.P = (1 - this.K) * priorP;

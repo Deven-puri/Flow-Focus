@@ -1,8 +1,3 @@
-/**
- * Custom hook for gaze logic
- * Handles dwell-time detection and bounding box management
- */
-
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
@@ -34,7 +29,6 @@ export function useGazeLogic(dwellThreshold = 3000) {
   const dwellTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastTargetRef = useRef<string | null>(null);
 
-  // Clear the dwell timer
   const clearDwellTimer = useCallback(() => {
     if (dwellTimerRef.current) {
       clearTimeout(dwellTimerRef.current);
@@ -42,7 +36,6 @@ export function useGazeLogic(dwellThreshold = 3000) {
     }
   }, []);
 
-  // Reset dwell state
   const resetDwell = useCallback(() => {
     clearDwellTimer();
     setDwellStartTime(null);
@@ -60,13 +53,11 @@ export function useGazeLogic(dwellThreshold = 3000) {
     );
   }, []);
 
-  // Get the target element at gaze coordinates
   const getTargetAtPoint = useCallback((x: number, y: number): GazeTarget | null => {
     const element = document.elementFromPoint(x, y) as HTMLElement;
     
     if (!element) return null;
 
-    // Check if the element or its parent is a gaze-target word
     let targetElement: HTMLElement | null = element;
     
     while (targetElement && !targetElement.classList.contains('gaze-target')) {
@@ -77,7 +68,6 @@ export function useGazeLogic(dwellThreshold = 3000) {
 
     const word = targetElement.textContent || '';
     
-    // Get the surrounding sentence for context
     let context = '';
     const paragraph = targetElement.closest('p');
     if (paragraph) {
@@ -92,15 +82,12 @@ export function useGazeLogic(dwellThreshold = 3000) {
     };
   }, []);
 
-  // Process gaze point
   const processGazePoint = useCallback(
     (x: number, y: number, onDwell?: (event: DwellEvent) => void) => {
       const timestamp = Date.now();
       
-      // Add to history
       setGazeHistory((prev) => {
         const newHistory = [...prev, { x, y, timestamp }];
-        // Keep only last 1000 points to prevent memory issues
         return newHistory.slice(-1000);
       });
 

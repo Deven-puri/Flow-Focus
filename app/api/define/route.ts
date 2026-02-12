@@ -1,8 +1,3 @@
-/**
- * API Route: /api/define
- * Gemini API integration for word definitions
- */
-
 import { NextRequest, NextResponse } from 'next/server';
 import { getWordDefinition } from '@/lib/gemini';
 
@@ -18,7 +13,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Use context if provided, otherwise just the word
     const definition = await getWordDefinition(
       word,
       context || `The user is trying to understand the word "${word}".`

@@ -1,8 +1,3 @@
-/**
- * EyeTracker Component
- * WebGazer initialization with smoothing and optimizations
- */
-
 'use client';
 
 import { useEffect, useRef, useState, useCallback } from 'react';
@@ -28,30 +23,23 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
   const gazeListenerRef = useRef<((data: any, elapsedTime: number) => void) | null>(null);
   const predictionDotRef = useRef<HTMLDivElement | null>(null);
 
-  // Initialize WebGazer
   useEffect(() => {
     const initWebGazer = async () => {
       try {
-        // Dynamically import webgazer
         const webgazer = (await import('webgazer')).default;
         window.webgazer = webgazer;
 
-        // Initialize smoother with less aggressive smoothing for better responsiveness
-        smootherRef.current = new WeightedMovingAverage(0.6); // Reduced from 0.8 for faster response
+        smootherRef.current = new WeightedMovingAverage(0.6);
 
-        // Set up gaze listener
         gazeListenerRef.current = (data: any, elapsedTime: number) => {
           if (data && smootherRef.current && !isPaused) {
-            // Apply smoothing
             const smoothed = smootherRef.current.smooth(data.x, data.y);
 
-            // Update prediction dot
             if (predictionDotRef.current && showPredictionDot && isVisible) {
               predictionDotRef.current.style.left = `${smoothed.x}px`;
               predictionDotRef.current.style.top = `${smoothed.y}px`;
             }
 
-            // Notify parent
             onGazeUpdate(smoothed.x, smoothed.y);
           }
         };
@@ -60,16 +48,13 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
           .setGazeListener(gazeListenerRef.current)
           .begin();
 
-        // Hide video preview for cleaner UI
         webgazer.showVideoPreview(false);
         webgazer.showPredictionPoints(false);
 
-        // Optimize for better performance and accuracy
-        webgazer.setRegression('ridge'); // Ridge regression is most accurate
-        webgazer.applyKalmanFilter(false); // Disable built-in Kalman, we use our own smoothing
+        webgazer.setRegression('ridge');
+        webgazer.applyKalmanFilter(false);
         
-        // Set tracker to use face detection
-        webgazer.setTracker('TFFacemesh'); // More accurate face tracking
+        webgazer.setTracker('TFFacemesh');
 
         setIsInitialized(true);
       } catch (error) {
@@ -79,7 +64,6 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
 
     initWebGazer();
 
-    // Cleanup
     return () => {
       if (window.webgazer) {
         window.webgazer.pause();
@@ -88,7 +72,6 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
     };
   }, [onGazeUpdate, showPredictionDot, isVisible, isPaused]);
 
-  // Battery optimization: pause when tab is hidden
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden && window.webgazer) {
@@ -105,7 +88,6 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
     };
   }, [isPaused]);
 
-  // Toggle pause
   const togglePause = useCallback(() => {
     if (window.webgazer) {
       if (isPaused) {
@@ -118,7 +100,6 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
     }
   }, [isPaused]);
 
-  // Privacy mode: kill switch
   const killSwitch = useCallback(() => {
     if (window.webgazer) {
       window.webgazer.pause();
@@ -126,7 +107,6 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
       setIsVisible(false);
       setIsPaused(true);
       
-      // Clear local storage
       localStorage.removeItem('webgazerGlobalData');
       
       alert('🔒 Eye tracking stopped and data cleared for privacy.');
@@ -135,7 +115,6 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
 
   return (
     <>
-      {/* Prediction Dot - larger and more visible */}
       {showPredictionDot && isVisible && !isPaused && (
         <div
           ref={predictionDotRef}
@@ -149,9 +128,7 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
         />
       )}
 
-      {/* Control Panel */}
       <div className="fixed bottom-6 right-6 flex gap-2 z-50">
-        {/* Recalibrate Button */}
         <button
           onClick={() => window.location.reload()}
           className="bg-blue-500 hover:bg-blue-600 text-white p-3 rounded-full shadow-lg transition-all hover:scale-105"
@@ -160,7 +137,6 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
           <Eye className="w-5 h-5" />
         </button>
 
-        {/* Pause/Resume */}
         <button
           onClick={togglePause}
           className="bg-white hover:bg-gray-50 text-gray-700 p-3 rounded-full shadow-lg transition-all hover:scale-105"
@@ -169,7 +145,6 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
           {isPaused ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
         </button>
 
-        {/* Kill Switch */}
         <button
           onClick={killSwitch}
           className="bg-red-500 hover:bg-red-600 text-white p-3 rounded-full shadow-lg transition-all hover:scale-105"
@@ -178,7 +153,6 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
           <EyeOff className="w-5 h-5" />
         </button>
 
-        {/* Status Indicator */}
         <div className="bg-white px-4 py-3 rounded-full shadow-lg flex items-center gap-2">
           <div
             className={`w-2 h-2 rounded-full ${

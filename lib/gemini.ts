@@ -1,11 +1,5 @@
-/**
- * Gemini API configuration
- * Handles contextual word definitions for stuck readers
- */
-
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Initialize Gemini API
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 export async function getWordDefinition(

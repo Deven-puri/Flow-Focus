@@ -1,8 +1,3 @@
-/**
- * HeatmapOverlay Component
- * Visualizes focus data using heatmap
- */
-
 'use client';
 
 import { useEffect, useRef } from 'react';
@@ -33,10 +28,8 @@ export default function HeatmapOverlay({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Clear canvas
     ctx.clearRect(0, 0, width, height);
 
-    // Create gradient for each point
     data.forEach((point) => {
       const radius = 50;
       const gradient = ctx.createRadialGradient(
@@ -48,7 +41,6 @@ export default function HeatmapOverlay({
         radius
       );
 
-      // Intensity based on value
       const intensity = Math.min(point.value / 20, 1);
 
       gradient.addColorStop(0, `rgba(255, 0, 0, ${intensity * 0.6})`);
@@ -65,14 +57,12 @@ export default function HeatmapOverlay({
       );
     });
 
-    // Apply blur for smoother heatmap
     ctx.filter = 'blur(20px)';
     ctx.globalCompositeOperation = 'source-over';
   }, [data, width, height]);
 
   return (
     <div className="relative" style={{ width, height }}>
-      {/* Background sample text */}
       <div className="absolute inset-0 p-8 text-gray-400 select-none overflow-hidden">
         <h2 className="text-2xl font-bold mb-4">Sample Reading Content</h2>
         <p className="mb-3 leading-relaxed">
@@ -95,7 +85,6 @@ export default function HeatmapOverlay({
         </p>
       </div>
 
-      {/* Heatmap overlay */}
       <canvas
         ref={canvasRef}
         width={width}

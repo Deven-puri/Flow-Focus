@@ -1,8 +1,3 @@
-/**
- * Calibration Component
- * Game-like 9-dot calibration for WebGazer
- */
-
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -26,22 +21,18 @@ export default function Calibration({ onComplete, requiredClicksPerPoint = 5 }: 
   const [isComplete, setIsComplete] = useState(false);
 
   useEffect(() => {
-    // Generate 9 calibration points in a grid
     const generatePoints = () => {
       const margin = 100;
       const width = window.innerWidth - margin * 2;
       const height = window.innerHeight - margin * 2;
 
       return [
-        // Top row
         { x: margin, y: margin, clicks: 0, id: 0 },
         { x: margin + width / 2, y: margin, clicks: 0, id: 1 },
         { x: margin + width, y: margin, clicks: 0, id: 2 },
-        // Middle row
         { x: margin, y: margin + height / 2, clicks: 0, id: 3 },
         { x: margin + width / 2, y: margin + height / 2, clicks: 0, id: 4 },
         { x: margin + width, y: margin + height / 2, clicks: 0, id: 5 },
-        // Bottom row
         { x: margin, y: margin + height, clicks: 0, id: 6 },
         { x: margin + width / 2, y: margin + height, clicks: 0, id: 7 },
         { x: margin + width, y: margin + height, clicks: 0, id: 8 },
@@ -55,9 +46,7 @@ export default function Calibration({ onComplete, requiredClicksPerPoint = 5 }: 
     setPoints((prevPoints) => {
       const newPoints = prevPoints.map((point) => {
         if (point.id === pointId && point.clicks < requiredClicksPerPoint) {
-          // Record this click with WebGazer for training
           if (window.webgazer) {
-            // Force WebGazer to record this as a training point
             window.webgazer.recordScreenPosition(point.x, point.y, 'click');
           }
           return { ...point, clicks: point.clicks + 1 };
@@ -65,15 +54,12 @@ export default function Calibration({ onComplete, requiredClicksPerPoint = 5 }: 
         return point;
       });
 
-      // Check if current point is complete
       const clickedPoint = newPoints.find((p) => p.id === pointId);
       if (clickedPoint && clickedPoint.clicks === requiredClicksPerPoint) {
-        // Move to next incomplete point
         const nextPoint = newPoints.find((p) => p.clicks < requiredClicksPerPoint);
         if (nextPoint) {
           setCurrentPoint(nextPoint.id);
         } else {
-          // All points complete!
           setIsComplete(true);
           setTimeout(() => onComplete(), 1000);
         }
