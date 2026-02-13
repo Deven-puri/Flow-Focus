@@ -1,4 +1,4 @@
-# Gaze Guide 👁️
+# Gaze Guide 
 
 An intelligent reading assistant leveraging WebGazer.js eye-tracking technology integrated with Gemini AI. The system implements dwell-time detection algorithms to provide contextual word definitions upon sustained visual focus. Built using Next.js framework with TypeScript, featuring Kalman filtering for gaze prediction optimization and real-time analytics visualization capabilities.
 
