@@ -29,7 +29,8 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
         const webgazer = (await import('webgazer')).default;
         window.webgazer = webgazer;
 
-        smootherRef.current = new WeightedMovingAverage(0.6);
+        // Initialize with stronger smoothing for better accuracy
+        smootherRef.current = new WeightedMovingAverage(0.7); // Increased from 0.6
 
         gazeListenerRef.current = (data: any, elapsedTime: number) => {
           if (data && smootherRef.current && !isPaused) {
@@ -51,10 +52,17 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
         webgazer.showVideoPreview(false);
         webgazer.showPredictionPoints(false);
 
+        // Use ridge regression for better accuracy
         webgazer.setRegression('ridge');
-        webgazer.applyKalmanFilter(false);
         
+        // Apply Kalman filter for smoother predictions
+        webgazer.applyKalmanFilter(true);
+        
+        // Use TFFacemesh for better face tracking
         webgazer.setTracker('TFFacemesh');
+
+        // Save data more frequently
+        webgazer.params.saveDataAcrossSessions = true;
 
         setIsInitialized(true);
       } catch (error) {
@@ -118,12 +126,13 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
       {showPredictionDot && isVisible && !isPaused && (
         <div
           ref={predictionDotRef}
-          className="fixed w-6 h-6 rounded-full pointer-events-none z-[9999]"
+          className="fixed w-5 h-5 rounded-full pointer-events-none z-[9999]"
           style={{
             transform: 'translate(-50%, -50%)',
-            background: 'radial-gradient(circle, rgba(239, 68, 68, 0.9) 0%, rgba(239, 68, 68, 0.6) 70%, rgba(239, 68, 68, 0) 100%)',
-            boxShadow: '0 0 20px rgba(239, 68, 68, 0.8), inset 0 0 10px rgba(255, 255, 255, 0.5)',
-            border: '2px solid rgba(255, 255, 255, 0.8)',
+            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.9) 0%, rgba(59, 130, 246, 0.5) 70%, rgba(59, 130, 246, 0) 100%)',
+            boxShadow: '0 0 15px rgba(59, 130, 246, 0.8), inset 0 0 8px rgba(255, 255, 255, 0.6)',
+            border: '2px solid rgba(255, 255, 255, 0.9)',
+            transition: 'all 0.05s ease-out',
           }}
         />
       )}

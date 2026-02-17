@@ -1,11 +1,15 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useUser, useClerk } from '@clerk/nextjs';
 import EyeTracker from '@/components/Reader/EyeTracker';
 import Calibration from '@/components/Reader/Calibration';
 import WordTooltip from '@/components/Reader/WordTooltip';
+import HistoryPanel from '@/components/History/HistoryPanel';
+import DocumentUploader from '@/components/Reader/DocumentUploader';
 import { useGazeLogic } from '@/hooks/useGazeLogic';
-import { BookOpen, Camera } from 'lucide-react';
+import { BookOpen, Camera, History, Upload, LogOut, UserCircle } from 'lucide-react';
 
 export default function ReaderPage() {
   const [permissionGranted, setPermissionGranted] = useState(false);
@@ -16,6 +20,18 @@ export default function ReaderPage() {
     y: number;
   } | null>(null);
   const [dwellProgress, setDwellProgress] = useState(0);
+  const [showHistory, setShowHistory] = useState(false);
+  const [showUploader, setShowUploader] = useState(false);
+  const [customContent, setCustomContent] = useState<{
+    title: string;
+    text: string;
+  } | null>(null);
+
+  const { user, isSignedIn } = useUser();
+  const { signOut } = useClerk();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isGuestMode = searchParams.get('guest') === 'true';
 
   const {
     currentTarget,
@@ -23,7 +39,12 @@ export default function ReaderPage() {
     processGazePoint,
     getDwellProgress,
     resetDwell,
-  } = useGazeLogic(3000);
+  } = useGazeLogic(2500); // Reduced from 3000ms to 2500ms for better responsiveness
+
+  useEffect(() => {
+    // Allow guest mode or authenticated users
+    // No redirect needed
+  }, []);
 
   const handleGazeUpdate = useCallback(
     (x: number, y: number) => {
@@ -41,26 +62,28 @@ export default function ReaderPage() {
   );
 
   const parseTextIntoWords = (text: string) => {
-    const words = text.split(' ');
+    const words = text.split(/\s+/);
     return words.map((word, index) => (
       <span
         key={index}
         className="gaze-target inline-block px-1 py-0.5 transition-colors hover:bg-blue-50 rounded cursor-pointer"
+        data-word={word}
       >
         {word}{' '}
       </span>
     ));
   };
 
-  const sampleContent = {
-    title: 'The Economic Impact of Climate Change',
-    paragraphs: [
-      'The unprecedented acceleration of global climate change has created a cascade of economic challenges that governments and businesses must navigate. Environmental economists warn that the financial ramifications of rising temperatures extend far beyond the immediate costs of natural disasters.',
-      'Infrastructure deterioration represents one of the most significant expenses. Roads, bridges, and buildings designed for historical temperature ranges are experiencing accelerated degradation. The phenomenon of thermal expansion in materials, combined with increased freeze-thaw cycles in temperate regions, necessitates costly premature replacements.',
-      'Agricultural productivity faces existential threats as traditional growing seasons become increasingly unpredictable. Farmers who have cultivated crops for generations must now contend with erratic precipitation patterns and the proliferation of invasive pest species that thrive in warmer conditions.',
-      'The insurance industry confronts an unprecedented actuarial crisis. Traditional risk assessment models, predicated on historical climate data, have become obsolete. Companies are recalibrating their methodologies to accommodate the escalating frequency of catastrophic weather events.',
-    ],
+  const handleDocumentLoaded = (content: string, title: string) => {
+    setCustomContent({ title, text: content });
   };
+
+  const sampleContent = customContent || {
+    title: 'The Economic Impact of Climate Change',
+    text: 'The unprecedented acceleration of global climate change has created a cascade of economic challenges that governments and businesses must navigate. Environmental economists warn that the financial ramifications of rising temperatures extend far beyond the immediate costs of natural disasters.\n\nInfrastructure deterioration represents one of the most significant expenses. Roads, bridges, and buildings designed for historical temperature ranges are experiencing accelerated degradation. The phenomenon of thermal expansion in materials, combined with increased freeze-thaw cycles in temperate regions, necessitates costly premature replacements.\n\nAgricultural productivity faces existential threats as traditional growing seasons become increasingly unpredictable. Farmers who have cultivated crops for generations must now contend with erratic precipitation patterns and the proliferation of invasive pest species that thrive in warmer conditions.\n\nThe insurance industry confronts an unprecedented actuarial crisis. Traditional risk assessment models, predicated on historical climate data, have become obsolete. Companies are recalibrating their methodologies to accommodate the escalating frequency of catastrophic weather events.',
+  };
+
+  const paragraphs = sampleContent.text.split('\n\n').filter(p => p.trim());
 
   if (!permissionGranted) {
     return (
@@ -88,44 +111,93 @@ export default function ReaderPage() {
     );
   }
 
-  if (!isCalibrated) {
-    return (
-      <>
-        <EyeTracker onGazeUpdate={() => {}} showPredictionDot={false} />
-        <Calibration onComplete={() => setIsCalibrated(true)} />
-      </>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50">
-      <EyeTracker onGazeUpdate={handleGazeUpdate} showPredictionDot={true} />
+      {permissionGranted && (
+        <>
+          {!isCalibrated ? (
+            <>
+              <EyeTracker onGazeUpdate={() => {}} showPredictionDot={false} />
+              <Calibration onComplete={() => setIsCalibrated(true)} />
+            </>
+          ) : (
+            <>
+              <EyeTracker onGazeUpdate={handleGazeUpdate} showPredictionDot={true} />
 
-      <div className="max-w-4xl mx-auto px-8 py-12">
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            <BookOpen className="w-8 h-8 text-blue-600" />
-            <h1 className="text-4xl font-bold text-gray-800">
-              {sampleContent.title}
-            </h1>
-          </div>
-          <p className="text-sm text-gray-500">
-            👁️ Look at any word for 3 seconds to get an AI-powered definition
-          </p>
-        </div>
+              {/* Top Navigation Bar */}
+              <div className="bg-white shadow-md border-b border-gray-200">
+                <div className="max-w-6xl mx-auto px-6 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <BookOpen className="w-6 h-6 text-blue-600" />
+                    <h1 className="text-xl font-bold text-gray-800">Gaze Guide</h1>
+                    {isGuestMode && (
+                      <span className="bg-gray-100 text-gray-600 text-xs px-3 py-1 rounded-full">
+                        Guest Mode
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {!isGuestMode && (
+                      <>
+                        <button
+                          onClick={() => setShowUploader(true)}
+                          className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                        >
+                          <Upload className="w-4 h-4" />
+                          Load Document
+                        </button>
+                        <button
+                          onClick={() => setShowHistory(true)}
+                          className="flex items-center gap-2 bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                        >
+                          <History className="w-4 h-4" />
+                          History
+                        </button>
+                      </>
+                    )}
+                    {isSignedIn ? (
+                      <button
+                        onClick={() => signOut()}
+                        className="flex items-center gap-2 bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors"
+                      >
+                        <LogOut className="w-4 h-4" />
+                        Sign Out
+                      </button>
+                    ) : (
+                      <button
+                        onClick={() => router.push('/sign-in')}
+                        className="flex items-center gap-2 bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                      >
+                        <UserCircle className="w-4 h-4" />
+                        Sign In
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+        
+              <div className="max-w-4xl mx-auto px-8 py-12">
+                <div className="mb-8">
+                  <h2 className="text-4xl font-bold text-gray-800 mb-2">
+                    {sampleContent.title}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    👁️ Look at any word for 2.5 seconds to get an AI-powered definition
+                  </p>
+                </div>
 
-        <div className="bg-white rounded-2xl shadow-lg p-10 space-y-6">
-          {sampleContent.paragraphs.map((paragraph, index) => (
-            <p
-              key={index}
-              className="text-lg leading-relaxed text-gray-700 font-serif"
-            >
-              {parseTextIntoWords(paragraph)}
-            </p>
-          ))}
-        </div>
+                <div className="bg-white rounded-2xl shadow-lg p-10 space-y-6">
+                  {paragraphs.map((paragraph, index) => (
+                    <p
+                      key={index}
+                      className="text-lg leading-relaxed text-gray-700 font-serif"
+                    >
+                      {parseTextIntoWords(paragraph)}
+                    </p>
+                  ))}
+                </div>
 
-        {currentTarget && !isDwelling && dwellProgress > 0 && (
+                {currentTarget && !isDwelling && dwellProgress > 0 && (
           <div
             className="fixed pointer-events-none z-40"
             style={{
@@ -173,7 +245,21 @@ export default function ReaderPage() {
             }}
           />
         )}
-      </div>
+
+        {!isGuestMode && (
+          <>
+            <HistoryPanel isOpen={showHistory} onClose={() => setShowHistory(false)} />
+            <DocumentUploader
+              isOpen={showUploader}
+              onClose={() => setShowUploader(false)}
+              onDocumentLoaded={handleDocumentLoaded}
+            />
+          </>
+        )}
+      </>
+    )}
+    </>
+  )}
     </div>
   );
 }

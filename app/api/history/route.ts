@@ -7,6 +7,13 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
 
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { word, context, sessionId } = body;
 
@@ -22,19 +29,17 @@ export async function POST(request: NextRequest) {
       context || `The user is trying to understand the word "${word}".`
     );
 
-    // Store in database if user is authenticated
-    if (user) {
-      const { error: insertError } = await supabase.from('word_lookups').insert({
-        user_id: user.id,
-        session_id: sessionId || null,
-        word: word.trim(),
-        context: context || null,
-        definition,
-      });
+    // Store in database
+    const { error: insertError } = await supabase.from('word_lookups').insert({
+      user_id: user.id,
+      session_id: sessionId || null,
+      word: word.trim(),
+      context: context || null,
+      definition,
+    });
 
-      if (insertError) {
-        console.error('Error storing lookup:', insertError);
-      }
+    if (insertError) {
+      console.error('Error storing lookup:', insertError);
     }
 
     return NextResponse.json({ definition });
