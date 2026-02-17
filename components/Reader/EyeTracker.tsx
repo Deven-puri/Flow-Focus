@@ -32,6 +32,13 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
         // Initialize with stronger smoothing for better accuracy
         smootherRef.current = new WeightedMovingAverage(0.7); // Increased from 0.6
 
+        // Set initial position for the dot to center of screen
+        if (predictionDotRef.current) {
+          predictionDotRef.current.style.left = `${window.innerWidth / 2}px`;
+          predictionDotRef.current.style.top = `${window.innerHeight / 2}px`;
+          predictionDotRef.current.style.display = 'block';
+        }
+
         gazeListenerRef.current = (data: any, elapsedTime: number) => {
           if (data && smootherRef.current && !isPaused) {
             const smoothed = smootherRef.current.smooth(data.x, data.y);
@@ -39,6 +46,7 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
             if (predictionDotRef.current && showPredictionDot && isVisible) {
               predictionDotRef.current.style.left = `${smoothed.x}px`;
               predictionDotRef.current.style.top = `${smoothed.y}px`;
+              predictionDotRef.current.style.display = 'block';
             }
 
             onGazeUpdate(smoothed.x, smoothed.y);
@@ -47,7 +55,11 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
 
         webgazer
           .setGazeListener(gazeListenerRef.current)
-          .begin();
+          .begin()
+          .then(() => {
+            console.log('✅ WebGazer initialized successfully');
+            setIsInitialized(true);
+          });
 
         webgazer.showVideoPreview(false);
         webgazer.showPredictionPoints(false);
@@ -63,8 +75,6 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
 
         // Save data more frequently
         webgazer.params.saveDataAcrossSessions = true;
-
-        setIsInitialized(true);
       } catch (error) {
         console.error('Failed to initialize WebGazer:', error);
       }
@@ -123,16 +133,19 @@ export default function EyeTracker({ onGazeUpdate, showPredictionDot = true }: E
 
   return (
     <>
-      {showPredictionDot && isVisible && !isPaused && (
+      {showPredictionDot && isVisible && (
         <div
           ref={predictionDotRef}
-          className="fixed w-5 h-5 rounded-full pointer-events-none z-[9999]"
+          className="fixed w-6 h-6 rounded-full pointer-events-none"
           style={{
             transform: 'translate(-50%, -50%)',
-            background: 'radial-gradient(circle, rgba(59, 130, 246, 0.9) 0%, rgba(59, 130, 246, 0.5) 70%, rgba(59, 130, 246, 0) 100%)',
-            boxShadow: '0 0 15px rgba(59, 130, 246, 0.8), inset 0 0 8px rgba(255, 255, 255, 0.6)',
-            border: '2px solid rgba(255, 255, 255, 0.9)',
-            transition: 'all 0.05s ease-out',
+            background: 'radial-gradient(circle, rgba(59, 130, 246, 1) 0%, rgba(59, 130, 246, 0.6) 60%, rgba(59, 130, 246, 0) 100%)',
+            boxShadow: '0 0 20px rgba(59, 130, 246, 1), 0 0 40px rgba(59, 130, 246, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.8)',
+            border: '3px solid rgba(255, 255, 255, 1)',
+            transition: 'all 0.1s ease-out',
+            zIndex: 999999,
+            display: 'block',
+            opacity: isPaused ? 0.3 : 1,
           }}
         />
       )}

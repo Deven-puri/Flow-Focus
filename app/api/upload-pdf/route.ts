@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import * as pdfjsLib from 'pdfjs-dist';
-
-// Configure PDF.js worker
-if (typeof window === 'undefined') {
-  pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
-}
+import * as pdfParse from 'pdf-parse';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,22 +20,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Convert file to buffer
     const arrayBuffer = await file.arrayBuffer();
-    const uint8Array = new Uint8Array(arrayBuffer);
+    const buffer = Buffer.from(arrayBuffer);
 
-    const loadingTask = pdfjsLib.getDocument({ data: uint8Array });
-    const pdf = await loadingTask.promise;
+    // Parse PDF
+    const data = await pdfParse(buffer);
 
-    let fullText = '';
-
-    for (let i = 1; i <= pdf.numPages; i++) {
-      const page = await pdf.getPage(i);
-      const textContent = await page.getTextContent();
-      const pageText = textContent.items
-        .map((item: any) => item.str)
-        .join(' ');
-      fullText += pageText + '\n\n';
-    }
+    // Get text content
+    let fullText = data.text;
 
     // Clean up the text
     fullText = fullText
@@ -48,12 +36,14 @@ export async function POST(request: NextRequest) {
       .replace(/\n+/g, '\n')
       .trim();
 
-    if (!fullText) {
-      throw new Error('No text found in PDF');
+    if (!fullText || fullText.length < 10) {
+      throw new Error('No readable text found in PDF');
     }
 
     return NextResponse.json({
       content: fullText.substring(0, 50000), // Limit to 50K chars
+      pages: data.numpages,
+      info: data.info,
     });
   } catch (error: any) {
     console.error('Error processing PDF:', error);

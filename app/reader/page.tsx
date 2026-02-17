@@ -246,20 +246,22 @@ export default function ReaderPage() {
           />
         )}
 
-        {!isGuestMode && (
-          <>
-            <HistoryPanel isOpen={showHistory} onClose={() => setShowHistory(false)} />
-            <DocumentUploader
-              isOpen={showUploader}
-              onClose={() => setShowUploader(false)}
-              onDocumentLoaded={handleDocumentLoaded}
-            />
-          </>
-        )}
-      </>
-    )}
-    </>
-  )}
+              </div>
+
+              {!isGuestMode && (
+                <>
+                  <HistoryPanel isOpen={showHistory} onClose={() => setShowHistory(false)} />
+                  <DocumentUploader
+                    isOpen={showUploader}
+                    onClose={() => setShowUploader(false)}
+                    onDocumentLoaded={handleDocumentLoaded}
+                  />
+                </>
+              )}
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }
